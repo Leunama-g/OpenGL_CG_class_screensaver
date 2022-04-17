@@ -7,11 +7,24 @@
 #include <stdlib.h>
 #include <math.h>
 
+//used to keep track of how long a triangle rotates
+//90 frames
 int state = -1;
+
+//used to keep track of the triangle that is supposed to be rotated and highlighted in the que
 int trictr = 0;
+
+//used as a degree offset to rotate the triangles
+//incremented 4 degrees per frame
 float rotate = 0;
 
+
+//used to keep track of for how long a triangle is to be highlighted 
+//20 frames
 int colorstate = 0;
+
+//when seq == 1 rotate one triangle out of the eight 360 degrees
+//when seq == 0 highlight the rotated triangle using the highlight color variable
 int seq = 1;
 
 
@@ -26,13 +39,24 @@ struct Color {
     float b = 0.0f;
 };
 
-Color centerPieceColor[8];
+//used to animate the color change of the polygon
+//off sets each vertex of the polygon
+//incremented by o.o1 every frame
 float coloroffset = 0.0f;
 
+
 const int noOfTriangles = 8;
+
+//holds the coordinats of the triangle center 
+//Draw triangle function draws the triangles on the center of the screen then the coordinates in origins are used to translate the center to
+//change the position of the triangle
 Coordinate origins[noOfTriangles];
+
+//holds the coordinates of the center polygon(octagon)
 Coordinate centerPiece[noOfTriangles];
 
+//holds the color values for the colors of each vertex of the octagon
+Color centerPieceColor[8];
 
 void getNewOrigin(float r, int num_points, Coordinate* origins);
 void drawTriangle(Color bottom, Color head);
@@ -87,8 +111,10 @@ void init(void)
     getNewOrigin(2.5, noOfTriangles, centerPiece);
 }
 
+//draws every frame
 void display() {
     //used to store the rotation offset
+    //value of angle is used to rotate each triangle so that it points to the center of the screen
     int angle;
 
     //head: color the first point of the triangle
@@ -115,47 +141,66 @@ void display() {
     
     for (int i = 0; i < noOfTriangles; i++) {
 
+        //value of angle is used to rotate each triangle so that it points to the center of the screen
         angle = 90 + (45 * i);
-
-       
-            
+    
         if (angle == 360)
             angle -= 360;
 
         if (seq == 1) {
+
+            //used to rotate one triangle at a time
             if (trictr == i) {
                 angle += rotate;
                 //std::cout << "i = " << i << ", rotate = " << rotate << ", state = " << state << std::endl;
             }
+
+            //translate the origin to the supposed triangle positions
             glTranslatef(origins[i].x, origins[i].y, 0.0f);
+
+            //rotate the triangle with the value of angle
             glRotatef(angle, 0.0f, 0.0f, 1.0f);
+
+            //draw triangle
             drawTriangle(bottom, head);
             
         }
         else
         {   
-            
+            //translate the origin to the supposed triangle positions
             glTranslatef(origins[i].x, origins[i].y, 0.0f);
+
+            //rotate so that it points to the center
             glRotatef(angle, 0.0f, 0.0f, 1.0f);
+
+            //used to highlight every triangle sequentially
+            //each triangle is highlighted for 20 frames
             if (((colorstate + ((trictr - 1) * 20)) / 20) % 8 == i) {
                 drawTriangle(highlight, highlight);
                 //std::cout << "i = " << i << ", colorstate = " << ((colorstate + ((trictr - 1) * 20)) / 20) % 8 << std::endl;
             }
             else
             {
+                //the other 7 triangles that arent highlighted are drawn
                 drawTriangle(bottom, head);
             }
         }
 
-        
+        //makes the changes that gltranslatef anf glrotatef are undone
         glLoadIdentity();
     }
 
     Color drawnC;
+    //draws the octagon
     glBegin(GL_POLYGON);
 
     for (int i = 0; i < noOfTriangles; i++) {
+        //coloroffset is used to animate the color change
+        //incremented 0.01 each frame
         drawnC.r = centerPieceColor[i].r + coloroffset;
+
+        //acceptablle values for glcolor3f are between 0-1
+        //to make sure an error does not occur 
         if (drawnC.r > 1.0f)
             drawnC.r -= 1.0f;
         drawnC.g = centerPieceColor[i].g + coloroffset;
@@ -164,7 +209,11 @@ void display() {
         drawnC.b = centerPieceColor[i].b + coloroffset;
         if (drawnC.b > 1.0f)
             drawnC.b -= 1.0f;
+
+        //changes the color so that each vertex is different
         glColor3f(drawnC.r, drawnC.g, drawnC.b);
+
+        //draws the vertex of the polygon
         glVertex2f(centerPiece[i].x, centerPiece[i].y);
     }
 
@@ -173,6 +222,7 @@ void display() {
     glutSwapBuffers();
 }
 
+//called everytime the width and hight of the window changes
 void reshape(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -181,6 +231,7 @@ void reshape(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
+//used to redisplay the modified frame buffer at 72hz
 void timer(int) {
 
     //call glutdisplayfunc again
@@ -189,6 +240,11 @@ void timer(int) {
     //update the screen 72 times per second
     glutTimerFunc(1000 / 72, timer, 0);
 
+
+    //controls the red highlight state
+    //happens every 20 frame
+    //20 * 8 = 160 so all the triangles are highlighted 
+    //added another 20 so that the one that was highlighted firstis highlighted at the end
     if (colorstate < 180 && seq == 0)
         colorstate++;
 
@@ -197,25 +253,42 @@ void timer(int) {
         seq = 1;
     }
 
+    //used to keep track of how long a triangle rotates
+    //90 frames
     if (state < 90 && seq == 1) {
         state++;
     }
         
     else if (state == 90 && seq == 1) {
         state = 0;
+
+        //reset the rotation offset so that it starts from 0 for the next triangle
         rotate = 0;
+
+        // change the seq
+        // highlight sequence instead of rotation sequence 
         seq = 0;
+
+        //every 90 frame the target triangle is changed 
+        //the target triangle gets rotated or is highlighted first in the highlight sequence 
         if (trictr < 8)
             trictr++;
         else
             trictr = 0;
-    }        
+    }    
 
+
+    //used as a degree offset to rotate the triangles
+    //incremented 4 degrees per frame
     if (rotate < 360 && seq == 1)
         rotate += 4;
     else if (rotate == 360 && seq == 1)
         rotate = 4;
     
+
+    //used to animate the color change of the polygon
+    //off sets each vertex of the polygon
+    //incremented by o.o1 every frame
     if (coloroffset < 1.0f) {
         coloroffset += 0.01f;
     }
