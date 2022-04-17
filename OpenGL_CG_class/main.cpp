@@ -7,6 +7,18 @@
 #include <stdlib.h>
 #include <math.h>
 
+
+//
+// Amanuel Bitsuamlak
+// Amanuel Getachew
+// Amanuel Kefelegn
+// Ananya Getenet
+// Asrat Yehombawork
+// 
+
+
+
+
 //used to keep track of how long a triangle rotates
 //90 frames
 int state = -1;
