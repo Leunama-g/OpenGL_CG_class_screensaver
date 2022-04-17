@@ -38,7 +38,7 @@ void getNewOrigin(float r, int num_points, Coordinate* origins);
 void drawTriangle(Color bottom, Color head);
 
 
-
+// produces set of points that equidistant from the center and also equi distant from themselves
 // PARAM:
 //      r is the radius
 //      num_points is the number of points to be generated 
@@ -58,6 +58,8 @@ void getNewOrigin(float r, int num_points, Coordinate* origins)
     }
 }
 
+
+//draw triangle on the center of the screen
 void drawTriangle(Color bottom, Color head) {
 
     glBegin(GL_TRIANGLES);
@@ -77,13 +79,22 @@ void drawTriangle(Color bottom, Color head) {
 void init(void)
 {
     glClearColor(0, 0, 0, 0);
+
+    //get the set of points to translate the triangles
     getNewOrigin(5, noOfTriangles, origins);
+
+    //get of points for the center polygon
     getNewOrigin(2.5, noOfTriangles, centerPiece);
 }
 
 void display() {
+    //used to store the rotation offset
     int angle;
-    Color head, bottom, highlight, param1, param2;
+
+    //head: color the first point of the triangle
+    //bottom: color the other two points of the triangle
+    //highlight: color for the highlighted triangle
+    Color head, bottom, highlight;
 
     head.r = 0.0f;
     head.g = 0.4f;
@@ -171,7 +182,11 @@ void reshape(int w, int h) {
 }
 
 void timer(int) {
+
+    //call glutdisplayfunc again
     glutPostRedisplay();
+
+    //update the screen 72 times per second
     glutTimerFunc(1000 / 72, timer, 0);
 
     if (colorstate < 180 && seq == 0)
